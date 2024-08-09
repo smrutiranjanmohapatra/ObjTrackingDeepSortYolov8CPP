@@ -10,7 +10,8 @@ Track::Track(KAL_MEAN& mean, KAL_COVA& covariance, int track_id, int n_init, int
     this->age = 1;
     this->time_since_update = 0;
     this->state = TrackState::Tentative;
-    features = FEATURESS(1, 256);
+   // features = FEATURESS(1, 256);
+    features = FEATURESS(1, 2048);
     features.row(0) = feature;  //features.rows() must = 0;
 
     this->_n_init = n_init;
@@ -26,7 +27,8 @@ Track::Track(KAL_MEAN& mean, KAL_COVA& covariance, int track_id, int n_init, int
     this->age = 1;
     this->time_since_update = 0;
     this->state = TrackState::Tentative;
-    features = FEATURESS(1, 256);
+    features = FEATURESS(1, 2048);
+    //features = FEATURESS(1, 256);
     features.row(0) = feature;  //features.rows() must = 0;
 
     this->_n_init = n_init;
@@ -51,7 +53,8 @@ void Track::predit(abc::KalmanFilter* kf)
 
 
     this->age += 1;
-    this->time_since_update += 1;
+    this->time_since_update += 1;           // tracks the number of frames that have passed since the last time this track was updated with an actual detection.
+                                            // If this value gets too high, it may indicate that the object has been lost.
 }
 
 void Track::update(abc::KalmanFilter* const kf, const DETECTION_ROW& detection)
@@ -71,17 +74,26 @@ void Track::update(abc::KalmanFilter* const kf, const DETECTION_ROW& detection)
 
 void Track::update(abc::KalmanFilter* const kf, const DETECTION_ROW& detection, CLSCONF pair_det)
 {
+    //calls Kalman filter to update the track's state (position, velocity) and covariance using the new detection.
     KAL_DATA pa = kf->update(this->mean, this->covariance, detection.to_xyah());
-    this->mean = pa.first;
-    this->covariance = pa.second;
+    //The track's mean and covariance are updated with the new values returned by the Kalman filter.
+    this->mean = pa.first;                             // Update the track's state (mean) with the new state.
+    this->covariance = pa.second;                      // Update the track's covariance with the new covariance.
 
+    // The new detection's features are added to the track's feature set. Features used for re-identification or matching between frames.
     featuresAppendOne(detection.feature);
     //    this->features.row(features.rows()) = detection.feature;
+
+    // Increase the hit count and reset the time since the last update. If the track is in a tentative state and has accumulated enough hits (detections), it is confirmed as a valid track.
     this->hits += 1;
     this->time_since_update = 0;
+
+    // If the track was tentative and has enough hits, confirm it
     if (this->state == TrackState::Tentative && this->hits >= this->_n_init) {
         this->state = TrackState::Confirmed;
     }
+
+    // Update the track's class and confidence with the values from the new detection.
     this->cls = pair_det.cls;
     this->conf = pair_det.conf;
 }
@@ -122,8 +134,10 @@ DETECTBOX Track::to_tlwh()
 void Track::featuresAppendOne(const FEATURE& f)
 {
     int size = this->features.rows();
-    FEATURESS newfeatures = FEATURESS(size + 1, 256);
-    newfeatures.block(0, 0, size, 256) = this->features;
+    //FEATURESS newfeatures = FEATURESS(size + 1, 256);
+    FEATURESS newfeatures = FEATURESS(size + 1, 2048);
+    //newfeatures.block(0, 0, size, 256) = this->features;
+    newfeatures.block(0, 0, size, 2048) = this->features;
     newfeatures.row(size) = f;
     features = newfeatures;
 }

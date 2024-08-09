@@ -133,14 +133,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="deepsort.cpp" />
-    <ClCompile Include="deepsortenginegenerator.cpp" />
-    <ClCompile Include="featuretensor.cpp" />
+    <ClCompile Include="featureextraction.cpp" />
     <ClCompile Include="hungarianoper.cpp" />
-    <ClCompile Include="iou.cpp" />
     <ClCompile Include="kalmanfilter.cpp" />
     <ClCompile Include="linear_assignment.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="manager.cpp" />
     <ClCompile Include="munkres.cpp" />
     <ClCompile Include="nn_matching.cpp" />
     <ClCompile Include="detection.cpp" />
@@ -150,15 +147,11 @@
   <ItemGroup>
     <ClInclude Include="datatype.h" />
     <ClInclude Include="deepsort.h" />
-    <ClInclude Include="deepsortenginegenerator.h" />
     <ClInclude Include="detection.h" />
-    <ClInclude Include="featuretensor.h" />
+    <ClInclude Include="featureextraction.h" />
     <ClInclude Include="hungarianoper.h" />
-    <ClInclude Include="iou.h" />
     <ClInclude Include="kalmanfilter.h" />
     <ClInclude Include="linear_assignment.h" />
-    <ClInclude Include="logging.h" />
-    <ClInclude Include="manager.hpp" />
     <ClInclude Include="matrix.h" />
     <ClInclude Include="model.hpp" />
     <ClInclude Include="munkres.h" />

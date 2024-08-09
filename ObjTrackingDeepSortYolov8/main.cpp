@@ -227,17 +227,17 @@ using namespace std;
 int main() {
     // Initialize ObjectDetection and DeepSORT
     ObjectDetection objectDetection("D:\\OPENCV\\yolov8n\\yolov8m.onnx");
-    DeepSORT deepSort(0.4, 100, 0.5, 70, 1);  // Example parameters
-
+    DeepSort deepSort("D:\\OPENCV\\fast-reid\\outputs\\onnx_model\\FastReIdModel.onnx", 1, 2048, 0.4, 100, 0.5, 70, 3);  // Example parameters
+     
     // Load a video file
-    VideoCapture sourceVideo("D:\\OPENCV\\Images\\8.mp4");
+    VideoCapture sourceVideo("D:\\OPENCV\\Images\\24.mp4");
+   // VideoCapture sourceVideo("C:\\Users\\ITLP 71\\Downloads\\Traffic IP Camera video.mp4");
     if (!sourceVideo.isOpened()) {
         cerr << "Error opening video file" << endl;
         return -1;
     }
-
+    cout << "Total frame : " << sourceVideo.get(CAP_PROP_FRAME_COUNT) << endl;
     Mat frame;
-    
     double fps = 0.0;
     std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
     //Start the timer
@@ -290,7 +290,7 @@ int main() {
         
 
         // Update the tracker with new detections
-        deepSort.update(detections,cls_conf);
+        deepSort.update(frame,detections,cls_conf);
 
         // Get tracked objects
         vector<TrackedObject> trackedObjects = deepSort.getTrackedObjects();
@@ -305,6 +305,7 @@ int main() {
             string label = "ID: " + to_string(obj.track_id);
             
             cout << "Id" << obj.track_id << ", X : " << obj.bounding_box.x << " Y: " << obj.bounding_box.y << " H: " << obj.bounding_box.height << " W: " << obj.bounding_box.width << " ClassID: " << obj.class_id << " confidence: " << obj.confidence<<endl;
+           // cout << "Feature for detection id :" << obj.track_id << " -> " << obj.feature << endl;
             int baseLine = 0;
             Size labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.8, 1, &baseLine);
 
@@ -324,12 +325,12 @@ int main() {
 
         // Display the frame with detections and tracking results
         imshow("Detections and Tracking", frame);
-
         // Exit if ESC key is pressed
         int key = waitKey(1);
         if (key == 27) break;
     }
 
+   
     sourceVideo.release();
     destroyAllWindows();
     return 0;

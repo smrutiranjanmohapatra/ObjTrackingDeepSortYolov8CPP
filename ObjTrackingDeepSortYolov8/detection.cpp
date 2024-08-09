@@ -32,6 +32,7 @@ public:
         modelNMSThreshold = 0.5;
         modelConfidenceThreshold = 0.25;
         modelScoreThreshold = 0.45;
+        //modelScoreThreshold = 0.8;
         image_size = 640;
 
 
@@ -110,8 +111,8 @@ public:
         int baseLine;
         Size labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
         top = max(top, labelSize.height);
-       // rectangle(frame, Point(left, top - round(1.5 * labelSize.height)), Point(left + round(1.5 * labelSize.width), top + baseLine), Scalar::all(255), FILLED);
-        //putText(frame, label, Point(left, top), FONT_HERSHEY_SIMPLEX, 0.75, Scalar(), 1);
+        rectangle(frame, Point(left, top - round(1.5 * labelSize.height)), Point(left + round(1.5 * labelSize.width), top + baseLine), Scalar::all(255), FILLED);
+        putText(frame, label, Point(left, top), FONT_HERSHEY_SIMPLEX, 0.75, Scalar(), 1);
     }
     void postprocess(Mat& frame, vector<Mat>& outs, vector<int>& class_ids, vector<float>& confidences, vector<Rect>& boxes) {
 
@@ -223,7 +224,7 @@ public:
             nmsClassIDs.push_back(class_ids[idx]);
             nmsConfidences.push_back(confidences[idx]);
             nmsBoxes.push_back(box);
-            drawPred(class_ids[idx], confidences[idx], box.x, box.y, box.x + box.width, box.y + box.height, frame);
+            //drawPred(class_ids[idx], confidences[idx], box.x, box.y, box.x + box.width, box.y + box.height, frame);
         }
 
         class_ids.clear();

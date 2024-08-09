@@ -56,6 +56,7 @@ KAL_DATA abc::KalmanFilter::initiate(const DETECTBOX& measurement) {
 
 void abc::KalmanFilter::predict(KAL_MEAN& mean, KAL_COVA& covariance) {
     //revise the data;
+    //These lines create two vectors, std_pos and std_vel, that hold the standard deviations for position and velocity components of the state vector.
     DETECTBOX std_pos;
     std_pos << _std_weight_position * mean(3),
         _std_weight_position* mean(3),
@@ -66,29 +67,48 @@ void abc::KalmanFilter::predict(KAL_MEAN& mean, KAL_COVA& covariance) {
         _std_weight_velocity* mean(3),
         1e-5,
         _std_weight_velocity* mean(3);
+
+    //the std_pos and std_vel vectors are combined into a single tmp vector, which is squared to get the variances which are used to calculate the process noise covariance matrix motion_cov
     KAL_MEAN tmp;
     tmp.block<1, 4>(0, 0) = std_pos;
     tmp.block<1, 4>(0, 4) = std_vel;
     tmp = tmp.array().square();
     KAL_COVA motion_cov = tmp.asDiagonal();
+
+    //Multiplies the current state mean by the motion model matrix _motion_mat to predict the new state mean1.
     KAL_MEAN mean1 = this->_motion_mat * mean.transpose();
+
+    //The covariance matrix is also updated based on the motion model. This accounts for the uncertainty in the state transition.
     KAL_COVA covariance1 = this->_motion_mat * covariance * (_motion_mat.transpose());
+
+    //Adds the process noise covariance motion_cov to the updated covariance matrix covariance1. This accounts for the uncertainty introduced by the prediction.
     covariance1 += motion_cov;
 
+    // the original mean and covariance are updated with the predicted values
     mean = mean1;
     covariance = covariance1;
 }
 
 KAL_HDATA abc::KalmanFilter::project(const KAL_MEAN& mean, const KAL_COVA& covariance) {
+    //A standard deviation vector std is created. This vector will be used to add uncertainty (noise) to the projected covariance in the measurement space.
     DETECTBOX std;
-    std << _std_weight_position * mean(3), _std_weight_position* mean(3),
-        1e-1, _std_weight_position* mean(3);
-    KAL_HMEAN mean1 = _update_mat * mean.transpose();
+    std << _std_weight_position * mean(3), _std_weight_position* mean(3),             //The first , second and fourth elements are the product of _std_weight_position and mean(3) (the height of bbox).
+        1e-1, _std_weight_position* mean(3);                                          //The third is a small constant value 1e-1, which is  a small uncertainty in the aspect ratio or similar feature.
+    
+    //The state mean mean is projected to the measurement space by multiplying it with the _update_mat matrix.
+    //_update_mat is a transformation matrix that maps the state space variables(position, velocity) to the measurement space variables(bounding box coordinates).
+    KAL_HMEAN mean1 = _update_mat * mean.transpose(); 
+
+    //The state covariance is projected to the measurement space using the same transformation matrix _update_mat.
+    //This projection results in a new covariance matrix covariance1 in the measurement space, which describes the uncertainty of the projected state mean.
     KAL_HCOVA covariance1 = _update_mat * covariance * (_update_mat.transpose());
+
+    //Add Measurement Noise to the Projected Covariance
     Eigen::Matrix<float, 4, 4> diag = std.asDiagonal();
     diag = diag.array().square().matrix();
     covariance1 += diag;
     //    covariance1.diagonal() << diag;
+
     return std::make_pair(mean1, covariance1);
 }
 
@@ -97,6 +117,7 @@ abc::KalmanFilter::update(
     const KAL_MEAN& mean,
     const KAL_COVA& covariance,
     const DETECTBOX& measurement) {
+    // Project the current state to measurement space.
     KAL_HDATA pa = project(mean, covariance);
     KAL_HMEAN projected_mean = pa.first;
     KAL_HCOVA projected_cov = pa.second;
@@ -107,12 +128,21 @@ abc::KalmanFilter::update(
     //scipy.linalg.cho_solve((cho_factor, lower),
     //np.dot(covariance, self._upadte_mat.T).T,
     //check_finite=False).T
+
+    // Calculate the Kalman gain.
     Eigen::Matrix<float, 4, 8> B = (covariance * (_update_mat.transpose())).transpose();
     Eigen::Matrix<float, 8, 4> kalman_gain = (projected_cov.llt().solve(B)).transpose(); // eg.8x4
+
+    // Calculate the innovation (difference between measurement and prediction).
     Eigen::Matrix<float, 1, 4> innovation = measurement - projected_mean; //eg.1x4
+
+    // Update the state mean with the innovation.
     auto tmp = innovation * (kalman_gain.transpose());
     KAL_MEAN new_mean = (mean.array() + tmp.array()).matrix();
+
+    // Update the covariance with the Kalman gain.
     KAL_COVA new_covariance = covariance - kalman_gain * projected_cov * (kalman_gain.transpose());
+
     return std::make_pair(new_mean, new_covariance);
 }
 

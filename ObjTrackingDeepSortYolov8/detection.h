@@ -23,26 +23,8 @@ struct TrackedObject {
     Rect bounding_box;
     float confidence;
     int class_id;
+   // VectorXf feature;  // This line to store feature vector
 };
-
-//// CLSCONF structure definition
-//struct CLSCONF {
-//    int cls;
-//    float conf;
-//};
-
-//// DETECTION_ROW structure definition
-//struct DETECTION_ROW1 {
-//    VectorXf feature;  // Feature vector
-//    Rect bounding_box; // Bounding box (x, y, width, height)
-//
-//    // Convert bounding box to tlwh format
-//    VectorXf to_tlwh() const {
-//        VectorXf tlwh(4);
-//        tlwh << bounding_box.x, bounding_box.y, bounding_box.width, bounding_box.height;
-//        return tlwh;
-//    }
-//};
 
 // Type aliases
 using DETECTIONS = vector<DETECTION_ROW>;

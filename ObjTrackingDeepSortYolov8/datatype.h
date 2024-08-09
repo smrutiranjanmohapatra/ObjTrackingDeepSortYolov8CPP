@@ -1,7 +1,7 @@
 #pragma once
 #ifndef DATATYPE_H
 #define DATATYPE_H
-#define Feature_Vector_Dim 256
+#define Feature_Vector_Dim 2048
 
 typedef struct DetectBox {
     DetectBox(float x1 = 0, float y1 = 0, float x2 = 0, float y2 = 0,
@@ -48,8 +48,10 @@ typedef struct CLSCONF {
 
 typedef Eigen::Matrix<float, 1, 4, Eigen::RowMajor> DETECTBOX;
 typedef Eigen::Matrix<float, -1, 4, Eigen::RowMajor> DETECTBOXSS;
-typedef Eigen::Matrix<float, 1, 256, Eigen::RowMajor> FEATURE;
-typedef Eigen::Matrix<float, Eigen::Dynamic, 256, Eigen::RowMajor> FEATURESS;
+//typedef Eigen::Matrix<float, 1, 256, Eigen::RowMajor> FEATURE;
+//typedef Eigen::Matrix<float, Eigen::Dynamic, 256, Eigen::RowMajor> FEATURESS;
+typedef Eigen::Matrix<float, 1, 2048, Eigen::RowMajor> FEATURE;
+typedef Eigen::Matrix<float, Eigen::Dynamic, 2048, Eigen::RowMajor> FEATURESS;
 //typedef std::vector<FEATURE> FEATURESS;
 
 //Kalmanfilter

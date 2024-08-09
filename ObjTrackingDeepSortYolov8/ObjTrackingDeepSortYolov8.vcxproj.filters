@@ -24,10 +24,7 @@
     <ClCompile Include="deepsort.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="deepsortenginegenerator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="featuretensor.cpp">
+    <ClCompile Include="featureextraction.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="hungarianoper.cpp">
@@ -51,21 +48,9 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="manager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="iou.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deepsort.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="deepsortenginegenerator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="featuretensor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="hungarianoper.h">
@@ -75,9 +60,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="linear_assignment.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="logging.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="matrix.h">
@@ -98,16 +80,13 @@
     <ClInclude Include="tracker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="manager.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="datatype.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="iou.h">
+    <ClInclude Include="detection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="detection.h">
+    <ClInclude Include="featureextraction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
