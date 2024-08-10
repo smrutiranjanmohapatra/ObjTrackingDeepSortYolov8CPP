@@ -73,7 +73,8 @@ typedef struct t {
     std::vector<MATCH_DATA> matches;
     std::vector<int> unmatched_tracks;
     std::vector<int> unmatched_detections;
-}TRACHER_MATCHD;
+    std::vector<int> scope_out_tracks;
+}TRACKER_MATCHD;
 
 //linear_assignment:
 typedef Eigen::Matrix<float, -1, -1, Eigen::RowMajor> DYNAMICM;

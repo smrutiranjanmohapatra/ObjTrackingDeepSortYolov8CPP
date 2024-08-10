@@ -1,57 +1,3 @@
-//#include<iostream>
-//#include "manager.hpp"
-//#include <opencv2/opencv.hpp>
-//#include <opencv2/highgui/highgui.hpp>
-//#include <opencv2/opencv.hpp>
-//#include <vector>
-//#include <chrono>
-//#include <map>
-//#include <cmath>
-//#include <time.h>
-//using namespace cv;
-//
-//
-//
-//
-//int main() {
-//	// calculate every person's (id,(up_num,down_num,average_x,average_y))
-//	map<int, vector<int>> personstate;
-//	map<int, int> classidmap;
-//	bool is_first = true;
-//	char* yolo_engine = "";
-//	char* sort_engine = "";
-//	float conf_thre = 0.4;
-//	Trtyolosort yosort(yolo_engine, sort_engine);
-//	VideoCapture capture;
-//	cv::Mat frame;
-//	frame = capture.open("");
-//	if (!capture.isOpened()) {
-//		std::cout << "can not open" << std::endl;
-//		return -1;
-//	}
-//	capture.read(frame);
-//	std::vector<DetectBox> det;
-//	auto start_draw_time = std::chrono::system_clock::now();
-//
-//	clock_t start_draw, end_draw;
-//	start_draw = clock();
-//	int i = 0;
-//	while (capture.read(frame)) {
-//		if (i % 3 == 0) {
-//			//std::cout<<"origin img size:"<<frame.cols<<" "<<frame.rows<<std::endl;
-//			auto start = std::chrono::system_clock::now();
-//			yosort.TrtDetect(frame, conf_thre, det);
-//			auto end = std::chrono::system_clock::now();
-//			int delay_infer = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-//			std::cout << "delay_infer:" << delay_infer << "ms" << std::endl;
-//		}
-//		i++;
-//	}
-//	capture.release();
-//	return 0;
-//
-//}
-
 //
 //#include <opencv2/opencv.hpp>
 //#include <opencv2/dnn.hpp>
@@ -227,11 +173,11 @@ using namespace std;
 int main() {
     // Initialize ObjectDetection and DeepSORT
     ObjectDetection objectDetection("D:\\OPENCV\\yolov8n\\yolov8m.onnx");
-    DeepSort deepSort("D:\\OPENCV\\fast-reid\\outputs\\onnx_model\\FastReIdModel.onnx", 1, 2048, 0.4, 100, 0.5, 70, 3);  // Example parameters
-     
+    DeepSort deepSort("D:\\OPENCV\\fast-reid\\outputs\\onnx_model\\FastReIdModel.onnx", 1, 2048, 0.4, 100, 0.5, 70, 1);  // Example parameters
+
     // Load a video file
     VideoCapture sourceVideo("D:\\OPENCV\\Images\\24.mp4");
-   // VideoCapture sourceVideo("C:\\Users\\ITLP 71\\Downloads\\Traffic IP Camera video.mp4");
+    // VideoCapture sourceVideo("C:\\Users\\ITLP 71\\Downloads\\Traffic IP Camera video.mp4");
     if (!sourceVideo.isOpened()) {
         cerr << "Error opening video file" << endl;
         return -1;
@@ -275,7 +221,7 @@ int main() {
         vector<CLSCONF> cls_conf;
         cout << "For Detection" << endl;
         for (size_t i = 0; i < boxes.size(); ++i) {
-            cout << "i" << i << ", X : " << boxes[i].x << " Y: " << boxes[i].y << " H: " << boxes[i].height << " W: " << boxes[i].width << " ClassID: " << classIds[i] << " confidence: " << confidences[i] << endl;
+            cout << "i : " << i << ", X : " << boxes[i].x << " Y: " << boxes[i].y << " H: " << boxes[i].height << " W: " << boxes[i].width << " ClassID: " << classIds[i] << " confidence: " << confidences[i] << endl;
             DetectBox detection(boxes[i].x,boxes[i].y,boxes[i].height,boxes[i].width);
             //// Assume the detection class has a method to extract features
             //detection.feature = objectDetection.extractFeature(frame, boxes[i]);
@@ -304,7 +250,7 @@ int main() {
             // Define text and calculate the size of the text box
             string label = "ID: " + to_string(obj.track_id);
             
-            cout << "Id" << obj.track_id << ", X : " << obj.bounding_box.x << " Y: " << obj.bounding_box.y << " H: " << obj.bounding_box.height << " W: " << obj.bounding_box.width << " ClassID: " << obj.class_id << " confidence: " << obj.confidence<<endl;
+            cout << "ID : " << obj.track_id << ", X : " << obj.bounding_box.x << " Y: " << obj.bounding_box.y << " H: " << obj.bounding_box.height << " W: " << obj.bounding_box.width << " ClassID: " << obj.class_id << " confidence: " << obj.confidence<<endl;
            // cout << "Feature for detection id :" << obj.track_id << " -> " << obj.feature << endl;
             int baseLine = 0;
             Size labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.8, 1, &baseLine);

@@ -108,6 +108,13 @@ void Track::mark_missed()
     }
 }
 
+void Track::scope_missed()
+{
+    //if (this->state == TrackState::Deleted) return;
+
+     this->state = TrackState::Deleted;   
+}
+
 bool Track::is_confirmed()
 {
     return this->state == TrackState::Confirmed;

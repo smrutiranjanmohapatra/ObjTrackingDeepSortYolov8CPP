@@ -65,6 +65,7 @@ public:
     void update(abc::KalmanFilter* const kf, const DETECTION_ROW& detection);
     void update(abc::KalmanFilter* const kf, const DETECTION_ROW& detection, CLSCONF pair_det);
     void mark_missed();
+    void scope_missed();
     bool is_confirmed();
     bool is_deleted();
     bool is_tentative();

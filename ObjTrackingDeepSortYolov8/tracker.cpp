@@ -37,7 +37,7 @@ void tracker::predict()
 
 void tracker::update(const DETECTIONS& detections)
 {
-    TRACHER_MATCHD res;
+    TRACKER_MATCHD res;
     _match(detections, res);
 
     vector < MATCH_DATA >& matches = res.matches;
@@ -46,14 +46,22 @@ void tracker::update(const DETECTIONS& detections)
         int detection_idx = data.second;
         tracks[track_idx].update(this->kf, detections[detection_idx]);
     }
+
     vector < int >& unmatched_tracks = res.unmatched_tracks;
     for (int& track_idx : unmatched_tracks) {
         this->tracks[track_idx].mark_missed();
     }
+
     vector < int >& unmatched_detections = res.unmatched_detections;
     for (int& detection_idx : unmatched_detections) {
         this->_initiate_track(detections[detection_idx]);
     }
+
+    vector<int>& scope_out_tracks = res.scope_out_tracks;
+    for (int& track_idx : scope_out_tracks) {
+        this->tracks[track_idx].scope_missed();
+    }
+
     vector < Track >::iterator it;
     for (it = tracks.begin(); it != tracks.end();) {
         if ((*it).is_deleted()) it = tracks.erase(it);
@@ -76,7 +84,7 @@ void tracker::update(const DETECTIONSV2& detectionsv2)
 {
     const vector<CLSCONF>& clsConf = detectionsv2.first;
     const DETECTIONS& detections = detectionsv2.second;
-    TRACHER_MATCHD res;
+    TRACKER_MATCHD res;
     _match(detections, res);
 
     vector < MATCH_DATA >& matches = res.matches;
@@ -85,17 +93,42 @@ void tracker::update(const DETECTIONSV2& detectionsv2)
         int detection_idx = data.second;
         tracks[track_idx].update(this->kf, detections[detection_idx], clsConf[detection_idx]);
     }
+
     vector < int >& unmatched_tracks = res.unmatched_tracks;
     for (int& track_idx : unmatched_tracks) {
         this->tracks[track_idx].mark_missed();
+        cout << "Unmatched_Tracks  : ID : " << this->tracks[track_idx].track_id <<
+            " ,x : " << this->tracks[track_idx].to_tlwh()(0) << " ,y : " << this->tracks[track_idx].to_tlwh()(1) <<
+            " ,w : " << this->tracks[track_idx].to_tlwh()(2) << " ,h : " << this->tracks[track_idx].to_tlwh()(3) << endl;
     }
+
     vector < int >& unmatched_detections = res.unmatched_detections;
     for (int& detection_idx : unmatched_detections) {
         this->_initiate_track(detections[detection_idx], clsConf[detection_idx]);
     }
+    
+    vector<int>& scope_out_tracks = res.scope_out_tracks;
+    for (auto track_idx : scope_out_tracks) {
+
+        for (auto& it:tracks) {
+            if (it.track_id == track_idx)
+            {
+                cout << "Delating ID OutOf_Scope : ID : " << it.track_id <<
+                    " ,x : " << it.to_tlwh()(0) << " ,y : " << it.to_tlwh()(1) <<
+                    " ,w : " << it.to_tlwh()(2) << " ,h : " << it.to_tlwh()(3) << endl;
+                it.scope_missed();
+            }
+        }
+       // this->tracks[track_idx].scope_missed();
+    }
     vector < Track >::iterator it;
     for (it = tracks.begin(); it != tracks.end();) {
-        if ((*it).is_deleted()) it = tracks.erase(it);
+        if ((*it).is_deleted())
+        {
+            cout << "ID : " << it->track_id << " deleted Successfully" << endl;
+            it = tracks.erase(it);
+        }
+
         else ++it;
     }
     vector < int >active_targets;
@@ -110,10 +143,12 @@ void tracker::update(const DETECTIONSV2& detectionsv2)
     this->metric->partial_fit(tid_features, active_targets);
 }
 
-void tracker::_match(const DETECTIONS& detections, TRACHER_MATCHD& res)
+void tracker::_match(const DETECTIONS& detections, TRACKER_MATCHD& res)
 {
     vector < int >confirmed_tracks;
     vector < int >unconfirmed_tracks;
+    vector < int >out_of_Scope_tracks;
+
     int idx = 0;
     for (Track& t : tracks) {
         if (t.is_confirmed()) 
@@ -123,7 +158,7 @@ void tracker::_match(const DETECTIONS& detections, TRACHER_MATCHD& res)
         idx++;
     }
     // Perform cascade matching for confirmed tracks
-    TRACHER_MATCHD matcha = linear_assignment::getInstance()->matching_cascade(
+    TRACKER_MATCHD matcha = linear_assignment::getInstance()->matching_cascade(
         this, &tracker::gated_matric,
         this->metric->mating_threshold,
         this->max_age,
@@ -144,28 +179,27 @@ void tracker::_match(const DETECTIONS& detections, TRACHER_MATCHD& res)
         ++it;
     }
     // Perform IOU matching for remaining tracks
-    TRACHER_MATCHD matchb = linear_assignment::getInstance()->min_cost_matching(
+    TRACKER_MATCHD matchb = linear_assignment::getInstance()->min_cost_matching(
         this, &tracker::iou_cost,
         this->max_iou_distance,
         this->tracks,
         detections,
         iou_track_candidates,
         matcha.unmatched_detections);
+
     //get result:
     // Combine matches from both cascade and IOU matching
     res.matches.assign(matcha.matches.begin(), matcha.matches.end());
     res.matches.insert(res.matches.end(), matchb.matches.begin(), matchb.matches.end());
     //unmatched_tracks;
-    res.unmatched_tracks.assign(
-        matcha.unmatched_tracks.begin(),
-        matcha.unmatched_tracks.end());
-    res.unmatched_tracks.insert(
-        res.unmatched_tracks.end(),
-        matchb.unmatched_tracks.begin(),
-        matchb.unmatched_tracks.end());
-    res.unmatched_detections.assign(
-        matchb.unmatched_detections.begin(),
-        matchb.unmatched_detections.end());
+    res.unmatched_tracks.assign(matcha.unmatched_tracks.begin(),matcha.unmatched_tracks.end());
+    res.unmatched_tracks.insert(res.unmatched_tracks.end(),matchb.unmatched_tracks.begin(), matchb.unmatched_tracks.end());
+    res.unmatched_detections.assign(matchb.unmatched_detections.begin(),matchb.unmatched_detections.end());
+
+    //Store Out of scope trackers
+    _outOfScope(out_of_Scope_tracks);
+    res.scope_out_tracks.assign(out_of_Scope_tracks.begin(), out_of_Scope_tracks.end());
+    cout << "Out of scope size :" << out_of_Scope_tracks.size() << endl;
 }
 
 void tracker::_initiate_track(const DETECTION_ROW& detection)
@@ -187,6 +221,44 @@ void tracker::_initiate_track(const DETECTION_ROW& detection, CLSCONF clsConf)
     this->tracks.push_back(Track(mean, covariance, this->_next_idx, this->n_init,
         this->max_age, detection.feature, clsConf.cls, clsConf.conf));
     _next_idx += 1;
+}
+
+void tracker::_outOfScope(vector <int>& out_of_Scope_tracks)
+{
+    /*for (int i = 0; i<matches.size();i++) 
+    {
+        
+        if (detections[i].tlwh[2]<=10 || detections[i].tlwh[3]<=10)
+        {
+            for (auto it : matches)
+            {
+                if (it.second == i)
+                {
+                 
+                    out_of_Scope_tracks.push_back(it.first);
+                    cout << " id : " << it.second << " out of scopr \n";
+                    cout << "tlwh : " << detections[i].tlwh[2] << detections[i].tlwh[3] << endl;
+                }
+            }
+        }
+    }*/
+    for (auto it : tracks)
+    {
+        DetectBox temp;
+        temp.x1 = it.to_tlwh()(0);
+        temp.y1 = it.to_tlwh()(1);
+        temp.x2 = it.to_tlwh()(2); 
+        temp.y2 = it.to_tlwh()(3);
+        temp.trackID = it.track_id;
+        if (temp.x1 <= 0 ||temp.x1 >= 1200 ||
+            temp.y1 <= 0 || temp.y2 >= 800 ||
+            temp.x2 <= 15|| temp.y2 <=15)
+        {
+            out_of_Scope_tracks.push_back(temp.trackID);
+            //cout << "Track ID Out of Scope  :" << temp.trackID << endl;
+        }
+    }
+    
 }
 
 DYNAMICM tracker::gated_matric(

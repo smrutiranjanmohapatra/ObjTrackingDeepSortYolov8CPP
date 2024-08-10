@@ -39,7 +39,8 @@ public:
         const std::vector<int>& track_indices,
         const std::vector<int>& detection_indices);
 private:
-    void _match(const DETECTIONS& detections, TRACHER_MATCHD& res);
+    void _match(const DETECTIONS& detections, TRACKER_MATCHD& res);
+    void _outOfScope(vector<int>& out_of_Scope_tracks);
     void _initiate_track(const DETECTION_ROW& detection);
     void _initiate_track(const DETECTION_ROW& detection, CLSCONF clsConf);
 public:
