@@ -133,6 +133,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="deepsort.cpp" />
+    <ClCompile Include="drawlines.cpp" />
     <ClCompile Include="featureextraction.cpp" />
     <ClCompile Include="hungarianoper.cpp" />
     <ClCompile Include="kalmanfilter.cpp" />
@@ -148,6 +149,7 @@
     <ClInclude Include="datatype.h" />
     <ClInclude Include="deepsort.h" />
     <ClInclude Include="detection.h" />
+    <ClInclude Include="drawlines.h" />
     <ClInclude Include="featureextraction.h" />
     <ClInclude Include="hungarianoper.h" />
     <ClInclude Include="kalmanfilter.h" />

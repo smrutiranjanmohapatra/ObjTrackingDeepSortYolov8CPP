@@ -48,6 +48,9 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="drawlines.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deepsort.h">
@@ -87,6 +90,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="featureextraction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="drawlines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

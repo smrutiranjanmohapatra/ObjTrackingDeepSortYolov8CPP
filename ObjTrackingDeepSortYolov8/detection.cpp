@@ -239,8 +239,8 @@ public:
     void detect(Mat& frame, vector<int>& classIds, vector<float>& confidences, vector<Rect>& boxes) {
 
         Mat modelInput = frame;
-        if (letterBoxForSquare && modelShape.width == modelShape.height)
-            modelInput = formatToSquare(modelInput);
+        /*if (letterBoxForSquare && modelShape.width == modelShape.height)
+            modelInput = formatToSquare(modelInput);*/
 
         Mat blob;
         blobFromImage(modelInput, blob, 1 / 255.0, Size(image_size, image_size), Scalar(), true, false);

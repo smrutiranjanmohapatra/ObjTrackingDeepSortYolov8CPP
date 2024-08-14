@@ -49,10 +49,10 @@ public:
     ~DeepSort();
 
     // Method to update the tracker with new detections
-    void update(cv::Mat& frame,const std::vector<DetectBox>& detections);
+    void update(cv::Mat& frame,const std::vector<DetectBox>& detections, cv::Point& crossLine);
 
     // Method to update the tracker with new detections including class IDs and confidences
-    void update(cv::Mat& frame,const std::vector<DetectBox>& detections, std::vector<CLSCONF>& clsConf);
+    void update(cv::Mat& frame,const std::vector<DetectBox>& detections, std::vector<CLSCONF>& clsConf,cv::Point& crossLine);
 
     // Method to get the current list of tracked objects
     std::vector<TrackedObject> getTrackedObjects();
@@ -68,10 +68,10 @@ private:
     DETECTIONSV2 convertDetectionsWithClass(const std::vector<DetectBox>& detections, std::vector<CLSCONF>& clsConf);
 
     // Helper method to update the tracker with the given detections
-    void updateTracker(cv::Mat& frame, DETECTIONS& detections);
+    void updateTracker(cv::Mat& frame, DETECTIONS& detections, cv::Point& crossLine);
 
     // Helper method to update the tracker with the given detections including class IDs
-    void updateTracker(cv::Mat& frame, DETECTIONSV2& detectionsv2);
+    void updateTracker(cv::Mat& frame, DETECTIONSV2& detectionsv2,cv::Point& crossLine);
 
     // Helper method to process the tracking results
     void processResults();

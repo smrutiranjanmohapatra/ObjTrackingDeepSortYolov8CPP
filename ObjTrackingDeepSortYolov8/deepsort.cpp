@@ -135,21 +135,21 @@ void DeepSort::init()
 }
 
 // Method to update the tracker with new detections
-void DeepSort::update(cv::Mat& frame,const vector<DetectBox>& detections)
+void DeepSort::update(cv::Mat& frame,const vector<DetectBox>& detections, cv::Point& crossLine)
 {
     DETECTIONS dets = convertDetections(detections);
     if (!dets.empty()) {
-        updateTracker(frame,dets);
+        updateTracker(frame,dets,crossLine);
         processResults();
     }
 }
 
 // Method to update the tracker with new detections including class IDs and confidences
-void DeepSort::update(cv::Mat& frame,const vector<DetectBox>& detections, vector<CLSCONF>& clsConf)
+void DeepSort::update(cv::Mat& frame,const vector<DetectBox>& detections, vector<CLSCONF>& clsConf,cv::Point& crossLine)
 {
     DETECTIONSV2 detectionsv2 = convertDetectionsWithClass(detections, clsConf);
     if (!detectionsv2.second.empty()) {
-        updateTracker(frame,detectionsv2);
+        updateTracker(frame,detectionsv2,crossLine);
         processResults();
     }
 }
@@ -196,18 +196,18 @@ DETECTIONSV2 DeepSort::convertDetectionsWithClass(const vector<DetectBox>& detec
 }
 
 // Helper method to update the tracker with the given detections
-void DeepSort::updateTracker(cv::Mat& frame, DETECTIONS& detections)
+void DeepSort::updateTracker(cv::Mat& frame, DETECTIONS& detections, cv::Point& crossLine)
 {
 
     bool flag = featureExtractor->getRectsFeature(frame, detections);
     if (flag) {
         this->tracker_->predict();
-        this->tracker_->update(detections);
+        this->tracker_->update(detections,crossLine);
     }
 }
 
 // Helper method to update the tracker with the given detections including class IDs
-void DeepSort::updateTracker(cv::Mat& frame, DETECTIONSV2& detectionsv2)
+void DeepSort::updateTracker(cv::Mat& frame, DETECTIONSV2& detectionsv2,cv::Point& crossLine)
 {
     DETECTIONS temp;
     temp = detectionsv2.second;
@@ -215,7 +215,7 @@ void DeepSort::updateTracker(cv::Mat& frame, DETECTIONSV2& detectionsv2)
     if (flag) {
         detectionsv2.second = temp;
         this->tracker_->predict();
-        this->tracker_->update(detectionsv2);
+        this->tracker_->update(detectionsv2,crossLine);
     }
 }
 

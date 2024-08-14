@@ -165,25 +165,69 @@
 #include "deepsort.h"
 #include "detection.h"
 #include "detection.cpp"  // Assuming detection-related classes are defined here
+#include "drawlines.h"
 
 using namespace cv;
 using namespace std;
 
+// Function to calculate the center point of a bounding box
+Point2f calculateCenterPoint(const Rect& bbox) {
+    return Point2f(bbox.x + bbox.width * 0.5f, bbox.y + bbox.height * 0.5f);
+}
+
+// Function to check if a point has crossed a line
+bool hasCrossedLine(const Point2f& point, const Point& lineStart,const Point& lineEnd) {
+    // Check if the center y  point is on one the other side of the line
+    return ((point.y < lineStart.y)&&(point.x>lineStart.x)&&(point.x<lineEnd.x));
+}
+
+
 // Main function
 int main() {
+
     // Initialize ObjectDetection and DeepSORT
     ObjectDetection objectDetection("D:\\OPENCV\\yolov8n\\yolov8m.onnx");
     DeepSort deepSort("D:\\OPENCV\\fast-reid\\outputs\\onnx_model\\FastReIdModel.onnx", 1, 2048, 0.4, 100, 0.5, 70, 1);  // Example parameters
+    
 
     // Load a video file
-    VideoCapture sourceVideo("D:\\OPENCV\\Images\\24.mp4");
+    VideoCapture sourceVideo("D:\\OPENCV\\Images\\23.mp4");
     // VideoCapture sourceVideo("C:\\Users\\ITLP 71\\Downloads\\Traffic IP Camera video.mp4");
     if (!sourceVideo.isOpened()) {
         cerr << "Error opening video file" << endl;
         return -1;
     }
-    cout << "Total frame : " << sourceVideo.get(CAP_PROP_FRAME_COUNT) << endl;
+   //cout << "Total frame : " << sourceVideo.get(CAP_PROP_FRAME_COUNT) << endl;
+
     Mat frame;
+    sourceVideo.read(frame);
+    resize(frame, frame, Size(1200, 800));
+
+    // Draw two lines on the first frame
+    DrawLines drawline;
+    pair<Point, Point> singleLine = drawline.drawOneLine(frame);
+    Point lineStart = singleLine.first;
+    Point lineEnd = singleLine.second;
+
+    //saving a video
+    // Get video properties
+    int frameWidth = static_cast<int>(frame.cols);
+    int frameHeight = static_cast<int>(frame.rows);
+    double framePerSec = sourceVideo.get(CAP_PROP_FPS);
+    cout << "Frame width :"<<frameWidth << " height :" << frameHeight << "fbs : " << framePerSec << endl;
+    // Initialize VideoWriter
+    VideoWriter videoWriter;
+    videoWriter.open("D:\\OPENCV\\ResultVideo\\output_video.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), framePerSec, Size(frameWidth, frameHeight));
+    //videoWriter.open("D:\\OPENCV\\ResultVideo\\output_video.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), framePerSec, Size(1200, 800));
+    //videoWriter.open("D:\\OPENCV\\ResultVideo\\output_video.mp4", VideoWriter::fourcc('X', '2', '6', '4'), framePerSec, Size(frameWidth, frameHeight), true);
+    if (!videoWriter.isOpened()) {
+        cerr << "Error opening video writer" << endl;
+        return -1;
+    }
+
+    // Frame counter
+    int frameCounter = 0;
+
     double fps = 0.0;
     std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
     //Start the timer
@@ -192,6 +236,12 @@ int main() {
         if (frame.empty()) {
             break;
         }
+       // frameCounter++;
+
+        //// Skip every 5 frames, process only the 1st, 6th, 11th, etc.
+        //if (frameCounter % 2 != 1) {
+        //    continue;
+        //}
 
         // Calculate FPS after each  frame
         endTime = std::chrono::steady_clock::now();
@@ -200,10 +250,10 @@ int main() {
         // Reset the start time for the next frame
         startTime = endTime;
 
-       resize(frame, frame, Size(1200, 800));
+        resize(frame, frame, Size(1200, 800));
 
         // Display FPS on the frame
-       // std::string fpsText = "FPS: " + std::to_string(static_cast<int>(fps));
+        // std::string fpsText = "FPS: " + std::to_string(static_cast<int>(fps));
         // Format FPS value with 2 decimal places
         std::ostringstream oss;
         oss << std::fixed << std::setprecision(2) << fps;
@@ -215,28 +265,46 @@ int main() {
         vector<float> confidences;
         vector<Rect> boxes;
         objectDetection.detect(frame, classIds, confidences, boxes);
-
+     
         // Prepare detections for DeepSORT
         vector<DetectBox> detections;
         vector<CLSCONF> cls_conf;
+        //cout << "For Detection" << endl;
+        //for (size_t i = 0; i < boxes.size(); ++i) {
+        //    cout << "i : " << i << ", X : " << boxes[i].x << " Y: " << boxes[i].y << " H: " << boxes[i].height << " W: " << boxes[i].width << " ClassID: " << classIds[i] << " confidence: " << confidences[i] << endl;
+        //    DetectBox detection(boxes[i].x,boxes[i].y,boxes[i].height,boxes[i].width);
+        //    //// Assume the detection class has a method to extract features
+        //    //detection.feature = objectDetection.extractFeature(frame, boxes[i]);
+
+        //    CLSCONF conf;
+        //    conf.cls = classIds[i];
+        //    conf.conf = confidences[i];
+
+        //    detections.push_back(detection);
+        //    cls_conf.push_back(conf);
+        //}
+
         cout << "For Detection" << endl;
         for (size_t i = 0; i < boxes.size(); ++i) {
-            cout << "i : " << i << ", X : " << boxes[i].x << " Y: " << boxes[i].y << " H: " << boxes[i].height << " W: " << boxes[i].width << " ClassID: " << classIds[i] << " confidence: " << confidences[i] << endl;
-            DetectBox detection(boxes[i].x,boxes[i].y,boxes[i].height,boxes[i].width);
-            //// Assume the detection class has a method to extract features
-            //detection.feature = objectDetection.extractFeature(frame, boxes[i]);
+            Point2f center = calculateCenterPoint(boxes[i]);
+            // Draw the center point
+            //circle(frame, center, 5, Scalar(0, 0, 255), -1);
 
-            CLSCONF conf;
-            conf.cls = classIds[i];
-            conf.conf = confidences[i];
+            // Check if the center point has crossed either of the lines
+            if (hasCrossedLine(center, lineStart,lineEnd)) {
+                cout << "i : " << i << ", X : " << boxes[i].x << " Y: " << boxes[i].y << " H: " << boxes[i].height << " W: " << boxes[i].width << " ClassID: " << classIds[i] << " confidence: " << confidences[i] << endl;
+                DetectBox detection(boxes[i].x, boxes[i].y, boxes[i].height, boxes[i].width);
+                CLSCONF conf;
+                conf.cls = classIds[i];
+                conf.conf = confidences[i];
 
-            detections.push_back(detection);
-            cls_conf.push_back(conf);
+                detections.push_back(detection);
+                cls_conf.push_back(conf);
+            }
         }
         
-
         // Update the tracker with new detections
-        deepSort.update(frame,detections,cls_conf);
+        deepSort.update(frame,detections,cls_conf,lineStart);
 
         // Get tracked objects
         vector<TrackedObject> trackedObjects = deepSort.getTrackedObjects();
@@ -269,8 +337,16 @@ int main() {
             putText(frame, "ID: " + to_string(obj.track_id), Point(obj.bounding_box.x, obj.bounding_box.y - 10),FONT_HERSHEY_SIMPLEX, 0.8, Scalar(0, 0, 0), 1);*/
         }
 
+        // Draw the line on the frame
+        line(frame, lineStart, lineEnd, Scalar(0, 255, 0), 2);
+
         // Display the frame with detections and tracking results
         imshow("Detections and Tracking", frame);
+
+        //resize(frame, frame, Size(1200, 800));
+        // Write the frame to the output video
+        videoWriter.write(frame);
+
         // Exit if ESC key is pressed
         int key = waitKey(1);
         if (key == 27) break;
@@ -278,6 +354,7 @@ int main() {
 
    
     sourceVideo.release();
+    videoWriter.release();
     destroyAllWindows();
     return 0;
 }

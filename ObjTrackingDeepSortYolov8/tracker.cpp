@@ -35,10 +35,10 @@ void tracker::predict()
     }
 }
 
-void tracker::update(const DETECTIONS& detections)
+void tracker::update(const DETECTIONS& detections,cv::Point& crossLine)
 {
     TRACKER_MATCHD res;
-    _match(detections, res);
+    _match(detections, res,crossLine);
 
     vector < MATCH_DATA >& matches = res.matches;
     for (MATCH_DATA& data : matches) {
@@ -80,12 +80,12 @@ void tracker::update(const DETECTIONS& detections)
     this->metric->partial_fit(tid_features, active_targets);
 }
 
-void tracker::update(const DETECTIONSV2& detectionsv2)
+void tracker::update(const DETECTIONSV2& detectionsv2,cv::Point& crossLine)
 {
     const vector<CLSCONF>& clsConf = detectionsv2.first;
     const DETECTIONS& detections = detectionsv2.second;
     TRACKER_MATCHD res;
-    _match(detections, res);
+    _match(detections, res,crossLine);
 
     vector < MATCH_DATA >& matches = res.matches;
     for (MATCH_DATA& data : matches) {
@@ -143,7 +143,7 @@ void tracker::update(const DETECTIONSV2& detectionsv2)
     this->metric->partial_fit(tid_features, active_targets);
 }
 
-void tracker::_match(const DETECTIONS& detections, TRACKER_MATCHD& res)
+void tracker::_match(const DETECTIONS& detections, TRACKER_MATCHD& res,cv::Point& crossLine)
 {
     vector < int >confirmed_tracks;
     vector < int >unconfirmed_tracks;
@@ -197,7 +197,7 @@ void tracker::_match(const DETECTIONS& detections, TRACKER_MATCHD& res)
     res.unmatched_detections.assign(matchb.unmatched_detections.begin(),matchb.unmatched_detections.end());
 
     //Store Out of scope trackers
-    _outOfScope(out_of_Scope_tracks);
+    _outOfScope(out_of_Scope_tracks,crossLine);
     res.scope_out_tracks.assign(out_of_Scope_tracks.begin(), out_of_Scope_tracks.end());
     cout << "Out of scope size :" << out_of_Scope_tracks.size() << endl;
 }
@@ -223,25 +223,10 @@ void tracker::_initiate_track(const DETECTION_ROW& detection, CLSCONF clsConf)
     _next_idx += 1;
 }
 
+
 void tracker::_outOfScope(vector <int>& out_of_Scope_tracks)
 {
-    /*for (int i = 0; i<matches.size();i++) 
-    {
-        
-        if (detections[i].tlwh[2]<=10 || detections[i].tlwh[3]<=10)
-        {
-            for (auto it : matches)
-            {
-                if (it.second == i)
-                {
-                 
-                    out_of_Scope_tracks.push_back(it.first);
-                    cout << " id : " << it.second << " out of scopr \n";
-                    cout << "tlwh : " << detections[i].tlwh[2] << detections[i].tlwh[3] << endl;
-                }
-            }
-        }
-    }*/
+    //finding out of scope ids with frame rows cols weight height 
     for (auto it : tracks)
     {
         DetectBox temp;
@@ -258,7 +243,24 @@ void tracker::_outOfScope(vector <int>& out_of_Scope_tracks)
             //cout << "Track ID Out of Scope  :" << temp.trackID << endl;
         }
     }
-    
+}
+
+//OutofScope ID after crossing the line or height width srink 
+void tracker::_outOfScope(vector <int>& out_of_Scope_tracks,cv::Point& crossLine)
+{
+    for (auto it : tracks)
+    {
+        DetectBox temp;
+        temp.y1 = it.to_tlwh()(1);
+        temp.x2 = it.to_tlwh()(2);
+        temp.y2 = it.to_tlwh()(3);
+        temp.trackID = it.track_id;
+        if (temp.y1 > crossLine.y|| temp.x2 <= 10 || temp.y2 <= 10)
+        {
+            out_of_Scope_tracks.push_back(temp.trackID);
+            //cout << "Track ID Out of Scope  :" << temp.trackID << endl;
+        }
+    }
 }
 
 DYNAMICM tracker::gated_matric(
